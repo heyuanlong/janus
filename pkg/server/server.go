@@ -74,8 +74,8 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		log.Info("Stopping server gracefully")
 	}()
 
-
 	// Register must be initialised synchronously to avoid race condition
+	//endpoint 注册器
 	r := s.createRouter()
 	s.register = proxy.NewRegister(
 		proxy.WithRouter(r),
@@ -87,7 +87,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		proxy.WithIsPublicEndpoint(s.globalConfig.Tracing.IsPublicEndpoint),
 	)
 
-
+	// 从配置文件里加载 endpoint 注册器
 	// API Loader must be initialised synchronously as well to avoid race condition
 	s.apiLoader = loader.NewAPILoader(s.register)
 
@@ -105,6 +105,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 	}
 
 	s.currentConfigurations = &api.Configuration{Definitions: definitions}
+	// 开启另一个api服务，此服务是endpoint控制服务
 	if err := s.startProvider(ctx); err != nil {
 		log.WithError(err).Fatal("Could not start providers")
 	}
