@@ -1,17 +1,17 @@
 {
-    "name" : "example",
+    "name" : "test",
     "active" : true,
     "proxy" : {
         "preserve_host" : false,
-        "listen_path" : "/example/*",
+        "listen_path" : "/test/*",
         "upstreams" : {
             "balancing": "roundrobin",
             "targets": [
-                {"target": "http://service1:8080/"}
+                {"target": "http://127.0.0.1:8086"}
             ]
         },
         "strip_path" : false,
-        "append_path" : false,
+        "append_path" : true,
         "methods" : ["GET"]
     },
     "health_check": {

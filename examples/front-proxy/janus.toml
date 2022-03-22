@@ -19,4 +19,4 @@ port = 8080
     users = {admin = "admin"}
 
 [database]
-  dsn = "file:///etc/janus"
+  dsn = "file:///share/github/janus/examples/front-proxy"
