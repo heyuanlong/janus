@@ -56,10 +56,11 @@ func RunServerStart(ctx context.Context, opts *ServerStartOptions, version strin
 	// all the logging configurations are initialised in initLog() later,
 	// but we try to initialise Writer (STDIN/STDERR/etc.) as early as possible manually
 	// to avoid loosing logs in systems heavily relying on them (e.g. running in docker)
-	initLogWriterEarly()
+	initLogWriterEarly() //初始化配置log
 
 	log.WithField("version", version).Info("Janus starting...")
 
+	//初始化
 	initConfig()
 	initLog()
 	initStatsClient()
@@ -69,6 +70,7 @@ func RunServerStart(ctx context.Context, opts *ServerStartOptions, version strin
 	defer statsClient.Close()
 	defer globalConfig.Log.Flush()
 
+	//热加载 endpoint 配置数据
 	repo, err := api.BuildRepository(globalConfig.Database.DSN, globalConfig.Cluster.UpdateFrequency)
 	if err != nil {
 		return fmt.Errorf("could not build a repository for the database: %w", err)
@@ -82,7 +84,7 @@ func RunServerStart(ctx context.Context, opts *ServerStartOptions, version strin
 		server.WithProfiler(opts.profilingEnabled, opts.profilingPublic),
 	)
 
-	ctx = ContextWithSignal(ctx)
+	ctx = ContextWithSignal(ctx) //这个有意思
 	svr.StartWithContext(ctx)
 	defer svr.Close()
 

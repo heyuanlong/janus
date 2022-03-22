@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hellofresh/janus/loghook"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,6 +22,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
+
+
 )
 
 var (
@@ -28,6 +31,7 @@ var (
 	statsClient  client.Client
 )
 
+//初始化配置log
 func initLogWriterEarly() {
 	switch logging.LogWriter(strings.ToLower(os.Getenv("LOG_WRITER"))) {
 	case logging.StdOut:
@@ -39,8 +43,11 @@ func initLogWriterEarly() {
 	default:
 		log.SetOutput(os.Stderr)
 	}
+
+	log.AddHook(loghook.NewContextHook())
 }
 
+//加载配置
 func initConfig() {
 	var err error
 	globalConfig, err = config.Load(configFile)
@@ -54,6 +61,7 @@ func initConfig() {
 	}
 }
 
+//根据配置进步设置log
 // initializes the basic configuration for the log wrapper
 func initLog() {
 	err := globalConfig.Log.Apply()
@@ -62,6 +70,7 @@ func initLog() {
 	}
 }
 
+//初始化统计库，已被修改为忽略统计
 func initStatsClient() {
 	// FIXME: this causes application hang because we're in the locked log already
 	//statsLog.SetHandler(func(msg string, fields map[string]interface{}, err error) {
@@ -83,7 +92,8 @@ func initStatsClient() {
 		WithField("map", sectionsTestsMap.String()).
 		Debug("Setting stats second level IDs")
 
-	statsClient, err = stats.NewClient(globalConfig.Stats.DSN)
+	statsClient, err = stats.NewClient("noop://") //修改为忽略统计
+	//statsClient, err = stats.NewClient(globalConfig.Stats.DSN)
 	if err != nil {
 		log.WithError(err).Fatal("Error initializing stats client")
 	}
@@ -105,6 +115,7 @@ func initStatsClient() {
 	log.AddHook(hooks.NewLogrusHook(statsClient, globalConfig.Stats.ErrorsSection))
 }
 
+//初始化统计导出器
 func initStatsExporter() {
 	var err error
 	logger := log.WithField("stats.exporter", globalConfig.Stats.Exporter)
@@ -138,6 +149,7 @@ func initStatsExporter() {
 	}
 }
 
+//初始化统计导出器-Prometheus
 func initPrometheusExporter() (err error) {
 	obs.PrometheusExporter, err = prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
@@ -148,6 +160,8 @@ func initPrometheusExporter() (err error) {
 	return err
 }
 
+
+//初始化链路追踪器
 func initTracingExporter() {
 	var err error
 	logger := log.WithField("tracing.exporter", globalConfig.Tracing.Exporter)

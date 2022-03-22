@@ -60,6 +60,8 @@ func (s *Server) Start() error {
 
 // StartWithContext starts the server and Stop/Close it when context is Done
 func (s *Server) StartWithContext(ctx context.Context) error {
+
+	//监控ctx的singal，收到信号，则关闭服务
 	go func() {
 		defer s.Close()
 		<-ctx.Done()
@@ -72,6 +74,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		log.Info("Stopping server gracefully")
 	}()
 
+
 	// Register must be initialised synchronously to avoid race condition
 	r := s.createRouter()
 	s.register = proxy.NewRegister(
@@ -83,6 +86,7 @@ func (s *Server) StartWithContext(ctx context.Context) error {
 		proxy.WithStatsClient(s.statsClient),
 		proxy.WithIsPublicEndpoint(s.globalConfig.Tracing.IsPublicEndpoint),
 	)
+
 
 	// API Loader must be initialised synchronously as well to avoid race condition
 	s.apiLoader = loader.NewAPILoader(s.register)
@@ -156,6 +160,13 @@ func (s *Server) Close() error {
 	defer close(s.configurationChan)
 	defer s.webServer.Stop()
 
+	//下面的代码可以改为
+	//cxt, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	//defer cancel()
+	//if err := s.server.Shutdown(cxt); err != nil {
+	//	log.Fatal("http shutdown err: " + err.Error())
+	//}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	go func(ctx context.Context) {
@@ -166,7 +177,6 @@ func (s *Server) Close() error {
 			panic("Timeout while stopping janus, killing instance ✝")
 		}
 	}(ctx)
-
 	return s.server.Close()
 }
 

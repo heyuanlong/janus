@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/hellofresh/janus/cmd"
-	"github.com/hellofresh/janus/loghook"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	log.AddHook(loghook.NewContextHook())
+
 }
 
 var version = "0.0.0-dev"
